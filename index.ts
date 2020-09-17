@@ -16,11 +16,24 @@ export type TokenAttributes = {
   };
 };
 
+export type DecryptedApplePaymentToken = {
+  applicationPrimaryAccountNumber: string;
+  applicationExpirationDate: string;
+  currencyCode: string;
+  transactionAmount: number;
+  deviceManufacturerIdentifier: string;
+  paymentDataType: string;
+  paymentData: {
+    onlinePaymentCryptogram: string;
+    eciIndicator: string;
+  };
+};
+
 /**
- * Initializing an instance of `PaymentToken` with JSON values present in the Apple Pay token string
+ * Initializing an instance of `ApplePaymentTokenDecryptor` with JSON values present in the Apple Pay token string
  * JSON representation - https://developer.apple.com/library/ios/documentation/PassKit/Reference/PaymentTokenJSON/PaymentTokenJSON.html
  */
-export class PaymentToken {
+export class ApplePaymentTokenDecryptor {
   private ephemeralPublicKey: string;
   private cipherText: string;
 
@@ -32,11 +45,15 @@ export class PaymentToken {
   /**
    * Decrypting the token using the PEM formatted merchant certificate and private key (the latter of which, at least, is managed by a third-party)
    */
-  public decrypt(certPem: string, privatePem: string) {
+  public decrypt(
+    certPem: string,
+    privatePem: string,
+  ): DecryptedApplePaymentToken {
     const sharedSecret = this.sharedSecret(privatePem);
     const merchantId = this.merchantId(certPem);
     const symmetricKey = this.symmetricKey(merchantId, sharedSecret);
     const decrypted = this.decryptCiphertext(symmetricKey, this.cipherText);
+
     return JSON.parse(decrypted);
   }
 

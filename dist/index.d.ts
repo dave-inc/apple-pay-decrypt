@@ -8,18 +8,30 @@ export declare type TokenAttributes = {
         transactionId: string;
     };
 };
+export declare type DecryptedApplePaymentToken = {
+    applicationPrimaryAccountNumber: string;
+    applicationExpirationDate: string;
+    currencyCode: string;
+    transactionAmount: number;
+    deviceManufacturerIdentifier: string;
+    paymentDataType: string;
+    paymentData: {
+        onlinePaymentCryptogram: string;
+        eciIndicator: string;
+    };
+};
 /**
  * Initializing an instance of `PaymentToken` with JSON values present in the Apple Pay token string
  * JSON representation - https://developer.apple.com/library/ios/documentation/PassKit/Reference/PaymentTokenJSON/PaymentTokenJSON.html
  */
-export declare class PaymentToken {
+export declare class ApplePaymentTokenDecryptor {
     private ephemeralPublicKey;
     private cipherText;
     constructor(tokenAttrs: TokenAttributes);
     /**
      * Decrypting the token using the PEM formatted merchant certificate and private key (the latter of which, at least, is managed by a third-party)
      */
-    decrypt(certPem: string, privatePem: string): any;
+    decrypt(certPem: string, privatePem: string): DecryptedApplePaymentToken;
     /**
      * Generating the shared secret with the merchant private key and the ephemeral public key(part of the payment token data)
      * using Elliptic Curve Diffie-Hellman (id-ecDH 1.3.132.1.12).

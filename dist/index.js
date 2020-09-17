@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PaymentToken = void 0;
+exports.ApplePaymentTokenDecryptor = void 0;
 const x509 = require('@ghaiklor/x509');
 const crypto = require('crypto');
 const forge = require('node-forge');
@@ -10,7 +10,7 @@ const MERCHANT_ID_FIELD_OID = '1.2.840.113635.100.6.32';
  * Initializing an instance of `PaymentToken` with JSON values present in the Apple Pay token string
  * JSON representation - https://developer.apple.com/library/ios/documentation/PassKit/Reference/PaymentTokenJSON/PaymentTokenJSON.html
  */
-class PaymentToken {
+class ApplePaymentTokenDecryptor {
     constructor(tokenAttrs) {
         this.ephemeralPublicKey = tokenAttrs.header.ephemeralPublicKey;
         this.cipherText = tokenAttrs.data;
@@ -88,5 +88,5 @@ class PaymentToken {
         return Buffer.from(decipher.output.toHex(), 'hex').toString('utf-8');
     }
 }
-exports.PaymentToken = PaymentToken;
+exports.ApplePaymentTokenDecryptor = ApplePaymentTokenDecryptor;
 //# sourceMappingURL=index.js.map

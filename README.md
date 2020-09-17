@@ -107,17 +107,17 @@ The `tokenFromApplePay` you get from Apple Pay will look something like this:
 }
 ```
 
-To decrypt the token, import the `.pem` files and create a new `PaymentToken` with the token from Apple Pay. Then decrypt using the keys. Ensure you import the certificates as utf8 text and not Buffers.
+To decrypt the token, import the `.pem` files and create a new `ApplePaymentTokenDecryptor` with the token from Apple Pay. Then decrypt using the keys. Ensure you import the certificates as utf8 text and not Buffers.
 
 ```ts
-import { PaymentToken, TokenAttributes } from '@dave-inc/apple-pay-decrypt';
+import { ApplePaymentTokenDecryptor, TokenAttributes } from '@dave-inc/apple-pay-decrypt';
 
 const certPem = fs.readFileSync(path.join(__dirname, '../path/to/certPem.pem'), 'utf8')
 const privatePem = fs.readFileSync(path.join(__dirname, '../path/to/privatePem.pem'), 'utf8')
 
 const tokenFromApplePay: TokenAttributes = {...} // from Apple Pay, might have to be adjusted slightly
 
-const token = new PaymentToken(tokenFromApplePay)
+const token = new ApplePaymentTokenDecryptor(tokenFromApplePay)
 
 const decrypted = token.decrypt(certPem, privatePem)
 ```
@@ -137,5 +137,7 @@ The `decrypted` value at this point should look something like this:
   }
 }
 ```
+
+# NOTE: Remember that the `transactionAmount` will come back as the number of cents so \$500 = 50000
 
 You can then use those decrypted values with your payment processor of choice (Stripe, Braintree, in our case Tabapay) to process payments from Apple Pay.
