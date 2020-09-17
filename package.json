@@ -31,6 +31,6 @@
   "dependencies": {
     "@ghaiklor/x509": "^1.1.0",
     "ec-key": "0.0.4",
-    "node-forge": "^0.8.0"
+    "node-forge": "^0.10.0"
   }
 }
