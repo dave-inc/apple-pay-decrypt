@@ -1,6 +1,6 @@
 {
   "name": "apple-pay-decrypt",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Enables decryption of Apple Pay tokens.",
   "main": "index.js",
   "scripts": {
@@ -29,7 +29,8 @@
     "parser": "babel-eslint"
   },
   "dependencies": {
-    "node-forge": "^0.8.0",
-    "x509": "^0.3.4"
+    "@ghaiklor/x509": "^1.1.0",
+    "ec-key": "0.0.4",
+    "node-forge": "^0.8.0"
   }
 }

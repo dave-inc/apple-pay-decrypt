@@ -1,7 +1,7 @@
-const x509 = require('x509');
+const x509 = require('@ghaiklor/x509');
 const crypto = require('crypto');
 const forge = require('node-forge');
-//const ECKey = require('ec-key');
+const ECKey = require('ec-key');
 
 const MERCHANT_ID_FIELD_OID = '1.2.840.113635.100.6.32';
 
@@ -38,34 +38,10 @@ class PaymentToken {
    * using Elliptic Curve Diffie-Hellman (id-ecDH 1.3.132.1.12).
    * As the Apple Pay certificate is issued using prime256v1 encryption, create elliptic curve key instances using the package - https://www.npmjs.com/package/ec-key
    */
-  // sharedSecret (privatePem) {
-  //   const prv = new ECKey(privatePem, 'pem') // Create a new ECkey instance from PEM formatted string
-  //   const publicEc = new ECKey(this.ephemeralPublicKey, 'spki') // Create a new ECKey instance from a base-64 spki string
-  //   return prv.computeSecret(publicEc).toString('hex') // Compute secret using private key for provided ephemeral public key
-  // }
-
-  sharedSecret(merchantPrivateKey) {
-    let om,
-      ecdh = crypto.createECDH('prime256v1');
-    ecdh.setPrivateKey(
-      new Buffer(merchantPrivateKey, 'base64')
-        .toString('hex')
-        .substring(14, 64 + 14),
-      'hex',
-    ); // 14: Key start, 64: Key length
-    try {
-      om = ecdh.computeSecret(
-        new Buffer(this.ephemeralPublicKey, 'base64')
-          .toString('hex')
-          .substring(52, 130 + 52),
-        'hex',
-        'hex',
-      ); // 52: Key start, 130: Key length
-    } catch (e) {
-      return e;
-    }
-
-    return om;
+  sharedSecret(privatePem) {
+    const prv = new ECKey(privatePem, 'pem'); // Create a new ECkey instance from PEM formatted string
+    const publicEc = new ECKey(this.ephemeralPublicKey, 'spki'); // Create a new ECKey instance from a base-64 spki string
+    return prv.computeSecret(publicEc).toString('hex'); // Compute secret using private key for provided ephemeral public key
   }
 
   /**
