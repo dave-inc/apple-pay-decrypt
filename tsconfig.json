@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "target": "es2017",
+    "outDir": "./dist",
+    "rootDirs": ["."],
+    "declaration": true,
+    "moduleResolution": "node",
+    "module": "commonjs",
+    "importHelpers": true,
+    "sourceMap": true,
+    "listFiles": false,
+    "traceResolution": false,
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "pretty": true,
+    "diagnostics": false,
+    "strictNullChecks": true,
+    "strictPropertyInitialization": true,
+    "noImplicitAny": true,
+    "lib": ["es2017"],
+    "types": ["node"],
+    "baseUrl": "./",
+    "resolveJsonModule": true,
+    "paths": {
+      "*": ["node_modules/@types/*", "*"]
+    }
+  },
+  "include": ["*.*"],
+  "exclude": ["node_modules/**", "./dist"]
+}

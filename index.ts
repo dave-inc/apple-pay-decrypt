@@ -5,12 +5,26 @@ const ECKey = require('ec-key');
 
 const MERCHANT_ID_FIELD_OID = '1.2.840.113635.100.6.32';
 
+export type TokenAttributes = {
+  version: string;
+  data: string;
+  signature: string;
+  header: {
+    ephemeralPublicKey: string;
+    publicKeyHash: string;
+    transactionId: string;
+  };
+};
+
 /**
  * Initializing an instance of `PaymentToken` with JSON values present in the Apple Pay token string
  * JSON representation - https://developer.apple.com/library/ios/documentation/PassKit/Reference/PaymentTokenJSON/PaymentTokenJSON.html
  */
-class PaymentToken {
-  constructor(tokenAttrs) {
+export class PaymentToken {
+  private ephemeralPublicKey: string;
+  private cipherText: string;
+
+  public constructor(tokenAttrs: TokenAttributes) {
     this.ephemeralPublicKey = tokenAttrs.header.ephemeralPublicKey;
     this.cipherText = tokenAttrs.data;
   }
@@ -18,19 +32,12 @@ class PaymentToken {
   /**
    * Decrypting the token using the PEM formatted merchant certificate and private key (the latter of which, at least, is managed by a third-party)
    */
-  decrypt(certPem, privatePem) {
+  public decrypt(certPem: string, privatePem: string) {
     const sharedSecret = this.sharedSecret(privatePem);
     const merchantId = this.merchantId(certPem);
     const symmetricKey = this.symmetricKey(merchantId, sharedSecret);
     const decrypted = this.decryptCiphertext(symmetricKey, this.cipherText);
     return JSON.parse(decrypted);
-
-    // matches the second close brace and returns everything before and including
-    // the second close brace. we need this because the result often returns with
-    // some random cruft at the end, such as `�d*�<?}ތ0j{��[`
-    // const regex = /^.+}.*?(})/g
-
-    // return JSON.parse(decrypted.match(regex)[0])
   }
 
   /**
@@ -38,7 +45,7 @@ class PaymentToken {
    * using Elliptic Curve Diffie-Hellman (id-ecDH 1.3.132.1.12).
    * As the Apple Pay certificate is issued using prime256v1 encryption, create elliptic curve key instances using the package - https://www.npmjs.com/package/ec-key
    */
-  sharedSecret(privatePem) {
+  private sharedSecret(privatePem: string) {
     const prv = new ECKey(privatePem, 'pem'); // Create a new ECkey instance from PEM formatted string
     const publicEc = new ECKey(this.ephemeralPublicKey, 'spki'); // Create a new ECKey instance from a base-64 spki string
     return prv.computeSecret(publicEc).toString('hex'); // Compute secret using private key for provided ephemeral public key
@@ -50,9 +57,9 @@ class PaymentToken {
    * This an id extension of the certificate it’s not your merchant identifier.
    * Parsing the certificate with the x509 NPM package - https://www.npmjs.com/package/x509#x509parsecert-cert-
    */
-  merchantId(cert) {
+  private merchantId(certPem: string) {
     try {
-      const info = x509.parseCert(cert);
+      const info = x509.parseCert(certPem);
       return info.extensions[MERCHANT_ID_FIELD_OID].split('@')[1];
     } catch (e) {
       console.error('Unable to extract merchant ID from certificate', e);
@@ -64,7 +71,7 @@ class PaymentToken {
    * https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-56ar.pdf
    * The symmetric key is a sha256 hash that contains shared secret token plus encoding information
    */
-  symmetricKey(merchantId, sharedSecret) {
+  private symmetricKey(merchantId: string, sharedSecret: string) {
     const KDF_ALGORITHM = '\x0did-aes256-GCM'; // The byte (0x0D) followed by the ASCII string "id-aes256-GCM". The first byte of this value is an unsigned integer that indicates the string’s length in bytes; the remaining bytes are a constiable-length string.
     const KDF_PARTY_V = Buffer.from(merchantId, 'hex').toString('binary'); // The SHA-256 hash of your merchant ID string literal; 32 bytes in size.
     const KDF_PARTY_U = 'Apple'; // The ASCII string "Apple". This value is a fixed-length string.
@@ -83,7 +90,7 @@ class PaymentToken {
    * Decrypting the cipher text from the token (data in the original payment token) key using AES–256 (id-aes256-GCM 2.16.840.1.101.3.4.1.46), with an initialization vector of 16 null bytes and no associated authentication data.
    *
    */
-  decryptCiphertext(symmetricKey, cipherText) {
+  private decryptCiphertext(symmetricKey: string, cipherText: string) {
     const data = forge.util.decode64(cipherText);
     const SYMMETRIC_KEY = forge.util.createBuffer(
       Buffer.from(symmetricKey, 'hex').toString('binary'),
@@ -109,5 +116,3 @@ class PaymentToken {
     return Buffer.from(decipher.output.toHex(), 'hex').toString('utf-8');
   }
 }
-
-module.exports = PaymentToken;
