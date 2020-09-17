@@ -1,18 +1,11 @@
 # Apple Pay Decrypt
 
-[![npm version](https://img.shields.io/npm/dt/apple-pay-decrypt.svg?style=flat-square)](https://img.shields.io/npm/dt/apple-pay-decrypt.svg)
-[![npm version](https://img.shields.io/npm/v/apple-pay-decrypt.svg?style=flat-square)](https://www.npmjs.com/package/apple-pay-decrypt)
-
-This package allows you to decrypt a token received from Apple Pay.
-
-This works in `node` and not on a browser, as it requires the built-in `crypto` package and secret keys (`.pem` files), which should never exist on the client anyway.
-
-The decryption methodology of this package is largely taken from the [Gala Ruby Gem](https://github.com/spreedly/gala).
+This is forked from https://github.com/samcorcos/apple-pay-decrypt and all credit should go to samcorcos. I've updated the dependencies to the latest versions, fixed any security vulns by running `npm audit fix` and added typescript typings. This is now compatible with node 12+.
 
 ## Getting Started
 
 ```sh
-npm i --save apple-pay-decrypt
+npm i --save @dave-inc/apple-pay-decrypt
 ```
 
 In order to decrypt the token, you will need two `.pem` files. One is a certificate and one is a key. The process for generating these is complicated.
@@ -86,7 +79,7 @@ And a key (`privatePem.pem`) that looks something like this:
 
 ```
 Bag Attributes
-    localKeyID: 90 C8 20 E7 8A 2A E5 7E 33 06 FD C5 43 47 9F 15 2F DE 73 90 
+    localKeyID: 90 C8 20 E7 8A 2A E5 7E 33 06 FD C5 43 47 9F 15 2F DE 73 90
 Key Attributes: <No Attributes>
 -----BEGIN PRIVATE KEY-----
 8nG5lEs5hYJ2WG9Yo39m1gyCHeNse5sOrph9Dq7tro5mO+nX3XaVaIi3MHFl9Hq6
@@ -114,15 +107,15 @@ The `tokenFromApplePay` you get from Apple Pay will look something like this:
 }
 ```
 
-To decrypt the token, import the `.pem` files and create a new `PaymentToken` with the token from Apple Pay. Then decrypt using the keys.
+To decrypt the token, import the `.pem` files and create a new `PaymentToken` with the token from Apple Pay. Then decrypt using the keys. Ensure you import the certificates as utf8 text and not Buffers.
 
-```js
-const PaymentToken = require('apple-pay-decrypt')
+```ts
+import { PaymentToken, TokenAttributes } from '@dave-inc/apple-pay-decrypt';
 
 const certPem = fs.readFileSync(path.join(__dirname, '../path/to/certPem.pem'), 'utf8')
 const privatePem = fs.readFileSync(path.join(__dirname, '../path/to/privatePem.pem'), 'utf8')
 
-const tokenFromApplePay = {...} // from Apple Pay
+const tokenFromApplePay: TokenAttributes = {...} // from Apple Pay, might have to be adjusted slightly
 
 const token = new PaymentToken(tokenFromApplePay)
 
@@ -140,9 +133,9 @@ The `decrypted` value at this point should look something like this:
   deviceManufacturerIdentifier: '544555544456',
   paymentDataType: '3DSecure',
   paymentData: {
-    onlinePaymentCryptogram: 'IE0QTuXZlbG9wZXIgUmiQAQojEBhgA=' 
-  } 
+    onlinePaymentCryptogram: 'IE0QTuXZlbG9wZXIgUmiQAQojEBhgA='
+  }
 }
 ```
 
-You can then use those decrypted values with your payment processor of choice (Stripe, Braintree, et al) to process payments from Apple Pay. 
+You can then use those decrypted values with your payment processor of choice (Stripe, Braintree, in our case Tabapay) to process payments from Apple Pay.

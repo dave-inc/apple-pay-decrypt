@@ -1,10 +1,11 @@
 {
-  "name": "apple-pay-decrypt",
-  "version": "1.0.9",
+  "name": "@dave-inc/apple-pay-decrypt",
+  "version": "1.0.0",
   "description": "Enables decryption of Apple Pay tokens.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
+    "prepare": "yarn tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -17,13 +18,12 @@
     "javascript"
   ],
   "author": "Jeremy Miller <jeremy@dave.com>",
-  "license": "MIT",
+  "license": "UNLICENSED",
   "bugs": {
     "url": "https://github.com/dave-inc/apple-pay-decrypt/issues"
   },
   "homepage": "https://github.com/dave-inc/apple-pay-decrypt#readme",
   "devDependencies": {
-    "standard": "^12.0.1",
     "typescript": "^4.0.2",
     "@types/node": "^14.11.1"
   },
