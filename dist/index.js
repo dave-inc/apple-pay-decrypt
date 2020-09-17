@@ -1,13 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ApplePaymentTokenDecryptor = void 0;
+const crypto = require("crypto");
+const forge = require("node-forge");
 const x509 = require('@ghaiklor/x509');
-const crypto = require('crypto');
-const forge = require('node-forge');
 const ECKey = require('ec-key');
 const MERCHANT_ID_FIELD_OID = '1.2.840.113635.100.6.32';
 /**
- * Initializing an instance of `PaymentToken` with JSON values present in the Apple Pay token string
+ * Initializing an instance of `ApplePaymentTokenDecryptor` with JSON values present in the Apple Pay token string
  * JSON representation - https://developer.apple.com/library/ios/documentation/PassKit/Reference/PaymentTokenJSON/PaymentTokenJSON.html
  */
 class ApplePaymentTokenDecryptor {
@@ -60,11 +60,11 @@ class ApplePaymentTokenDecryptor {
         const KDF_PARTY_V = Buffer.from(merchantId, 'hex').toString('binary'); // The SHA-256 hash of your merchant ID string literal; 32 bytes in size.
         const KDF_PARTY_U = 'Apple'; // The ASCII string "Apple". This value is a fixed-length string.
         const KDF_INFO = KDF_ALGORITHM + KDF_PARTY_U + KDF_PARTY_V;
-        let hash = crypto.createHash('sha256');
+        const hash = crypto.createHash('sha256');
         hash.update(Buffer.from('000000', 'hex'));
         hash.update(Buffer.from('01', 'hex'));
         hash.update(Buffer.from(sharedSecret, 'hex'));
-        hash.update(KDF_INFO, 'binary');
+        hash.update(KDF_INFO);
         return hash.digest('hex');
     }
     /**
@@ -77,7 +77,7 @@ class ApplePaymentTokenDecryptor {
         const IV = forge.util.createBuffer(Buffer.from([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]).toString('binary')); // Initialization vector of 16 null bytes
         const CIPHERTEXT = forge.util.createBuffer(data.slice(0, -16));
         const decipher = forge.cipher.createDecipher('AES-GCM', SYMMETRIC_KEY); // Creates and returns a Decipher object that uses the given algorithm and password (key)
-        const tag = data.slice(-16, data.length);
+        const tag = forge.util.createBuffer(data.slice(-16, data.length));
         decipher.start({
             iv: IV,
             tagLength: 128,

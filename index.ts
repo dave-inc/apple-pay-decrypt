@@ -1,6 +1,6 @@
+import * as crypto from 'crypto';
+import * as forge from 'node-forge';
 const x509 = require('@ghaiklor/x509');
-const crypto = require('crypto');
-const forge = require('node-forge');
 const ECKey = require('ec-key');
 
 const MERCHANT_ID_FIELD_OID = '1.2.840.113635.100.6.32';
@@ -94,11 +94,11 @@ export class ApplePaymentTokenDecryptor {
     const KDF_PARTY_U = 'Apple'; // The ASCII string "Apple". This value is a fixed-length string.
     const KDF_INFO = KDF_ALGORITHM + KDF_PARTY_U + KDF_PARTY_V;
 
-    let hash = crypto.createHash('sha256');
+    const hash = crypto.createHash('sha256');
     hash.update(Buffer.from('000000', 'hex'));
     hash.update(Buffer.from('01', 'hex'));
     hash.update(Buffer.from(sharedSecret, 'hex'));
-    hash.update(KDF_INFO, 'binary');
+    hash.update(KDF_INFO);
 
     return hash.digest('hex');
   }
@@ -120,7 +120,7 @@ export class ApplePaymentTokenDecryptor {
     const CIPHERTEXT = forge.util.createBuffer(data.slice(0, -16));
 
     const decipher = forge.cipher.createDecipher('AES-GCM', SYMMETRIC_KEY); // Creates and returns a Decipher object that uses the given algorithm and password (key)
-    const tag = data.slice(-16, data.length);
+    const tag = forge.util.createBuffer(data.slice(-16, data.length));
 
     decipher.start({
       iv: IV,

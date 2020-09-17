@@ -21,7 +21,7 @@ export declare type DecryptedApplePaymentToken = {
     };
 };
 /**
- * Initializing an instance of `PaymentToken` with JSON values present in the Apple Pay token string
+ * Initializing an instance of `ApplePaymentTokenDecryptor` with JSON values present in the Apple Pay token string
  * JSON representation - https://developer.apple.com/library/ios/documentation/PassKit/Reference/PaymentTokenJSON/PaymentTokenJSON.html
  */
 export declare class ApplePaymentTokenDecryptor {
