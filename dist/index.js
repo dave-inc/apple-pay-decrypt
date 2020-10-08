@@ -64,7 +64,7 @@ class ApplePaymentTokenDecryptor {
         hash.update(Buffer.from('000000', 'hex'));
         hash.update(Buffer.from('01', 'hex'));
         hash.update(Buffer.from(sharedSecret, 'hex'));
-        hash.update(KDF_INFO);
+        hash.update(KDF_INFO, 'ascii');
         return hash.digest('hex');
     }
     /**

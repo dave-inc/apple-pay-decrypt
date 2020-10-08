@@ -98,7 +98,8 @@ export class ApplePaymentTokenDecryptor {
     hash.update(Buffer.from('000000', 'hex'));
     hash.update(Buffer.from('01', 'hex'));
     hash.update(Buffer.from(sharedSecret, 'hex'));
-    hash.update(KDF_INFO);
+    // Output will be garbage characters if this value below is not set to ascii
+    hash.update(KDF_INFO, 'ascii');
 
     return hash.digest('hex');
   }

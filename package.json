@@ -1,13 +1,13 @@
 {
   "name": "@dave-inc/apple-pay-decrypt",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Enables decryption of Apple Pay tokens.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "prepare": "yarn eslint . && yarn tsc",
+    "prepare": "npm run eslint && npm test && rm -rf dist && tsc",
     "eslint": "eslint --ext .ts,.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "NODE_ENV=test jest --config jest.config.js --runInBand"
   },
   "repository": {
     "type": "git",
@@ -25,6 +25,7 @@
   },
   "homepage": "https://github.com/dave-inc/apple-pay-decrypt#readme",
   "devDependencies": {
+    "@types/jest": "^26.0.14",
     "@types/node": "^14.11.1",
     "@types/node-forge": "^0.9.5",
     "@typescript-eslint/eslint-plugin": "^3.8.0",
@@ -32,6 +33,8 @@
     "eslint": "^7.6.0",
     "eslint-plugin-import": "^2.22.0",
     "eslint-plugin-prefer-arrow": "^1.2.2",
+    "jest": "^26.0.1",
+    "ts-jest": "^26.1.0",
     "typescript": "^4.0.2"
   },
   "dependencies": {
