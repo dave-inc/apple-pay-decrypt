@@ -1,0 +1,83 @@
+name: Publish Github
+
+on:
+  push:
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+    branches:
+      - master
+  pull_request:
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+    branches:
+      - master
+
+jobs:
+  check-packages-github:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    outputs:
+      continue: ${{ steps.check.outputs.continue }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14.x'
+          registry-url: 'https://npm.pkg.github.com'
+
+      - name: Check packages where versions were changed
+        id: check
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ${{ github.workspace }}/.github/workflows/check-versions.sh
+
+  publish-github:
+    needs: check-packages-github
+    if: ${{ needs.check-packages-github.outputs.continue == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14.x'
+      - uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        run: npm i
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14.x'
+          registry-url: 'https://npm.pkg.github.com'
+
+      - name: Publish Release
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # The project local npmrc file has read-only tokens
+        run: |-
+          echo '//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}' > .npmrc
+          npm publish
+
+      - name: Publish Pre-Release
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |-
+          echo '//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}' > .npmrc
+
+          version=$(jq -r '.version' package.json)
+          pre_release=$(echo $version | cut -f2 -sd-)
+
+          if [[ ! -z "$pre_release" ]]; then
+            npm publish --tag dev
+          fi
