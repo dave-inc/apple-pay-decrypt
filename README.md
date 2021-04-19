@@ -1,6 +1,6 @@
 # Apple Pay Decrypt
 
-This is forked from https://github.com/samcorcos/apple-pay-decrypt and all credit should go to samcorcos. I've updated the dependencies to the latest versions, fixed any security vulns by running `npm audit fix` and added typescript typings. This is now compatible with node 12+.
+This is forked from https://github.com/samcorcos/apple-pay-decrypt and all credit should go to samcorcos. I've updated the dependencies to the latest versions, fixed any security vulns by running `npm audit fix` and added typescript typings. This is now compatible with node 14+.
 
 ## Getting Started
 
