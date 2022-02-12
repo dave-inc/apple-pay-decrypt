@@ -9,6 +9,9 @@
     "eslint": "eslint --ext .ts,.js",
     "test": "NODE_ENV=test jest --config jest.config.js"
   },
+  "files": [
+    "dist/"
+  ],
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/dave-inc/apple-pay-decrypt.git"
