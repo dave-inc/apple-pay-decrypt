@@ -1,6 +1,6 @@
 {
   "name": "@dave-inc/apple-pay-decrypt",
-  "version": "1.1.2-0",
+  "version": "1.1.2",
   "description": "Enables decryption of Apple Pay tokens.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
