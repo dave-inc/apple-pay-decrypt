@@ -140,6 +140,8 @@ The `decrypted` value at this point should look something like this:
 }
 ```
 
-# NOTE: Remember that the `transactionAmount` will come back as the number of cents so \$500 = 50000
+# IMPORTANT NOTES: 
 
-You can then use those decrypted values with your payment processor of choice (Stripe, Braintree, in our case Tabapay) to process payments from Apple Pay.
+* Remember that the `transactionAmount` will come back as the number of cents so \$500 = 50000
+* You can then use those decrypted values with your payment processor of choice (Stripe, Braintree, in our case Tabapay) to process payments from Apple Pay.
+* It takes about an hour for the new certificate to propagate after activation.  Failures will occur for about an hour when trying to decrypt with the new certificate values.  You'll need to fallback to old values for safe rotation. https://tech.bolt.com/apple-pay-certificate-rotation-e4eee6b0683f
