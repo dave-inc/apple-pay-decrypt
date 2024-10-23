@@ -14,38 +14,33 @@ In order to decrypt the token, you will need two `.pem` files. One is a certific
 
 If you get stuck, [this document](https://aaronmastsblog.com/blog/apple-pay-certificates/) might be helpful.
 
-Run the following commands (largely taken from the article written by [@amast09](https://github.com/amast09)) to generate your keys:
+## How to Renew Apple Pay Payment Certificate
 
+The following steps were largely taken from the article written by [@amast09](https://github.com/amast09)) to generate your keys.
+
+1. Generate a CSR file with the following command:
 ```sh
 openssl ecparam -out private.key -name prime256v1 -genkey
 openssl req -new -sha256 -key private.key -nodes -out request.csr
 ```
-
-Then go to the [Apple Developer Certificate Manager](https://developer.apple.com/account/ios/certificate/).
-
-Make sure you have a Merchant Id. Navigate to `Identifiers` => `Merchant IDs` to make sure you have one, if not, create one.
-
-Go to `Certificates` => `All`, then `+` in the top right. Select `Apple Pay Payment Processing Certificate`, go through to `Generate` and upload the `.csr` file you created (`request.csr`). Note that `.csr` is the same as `.certSigningRequest`.
-
-Download the file, which will download as `apple_pay.cer`. You need that file to create the key.
-
+2. Go to the [Apple Developer Certificate Manager](https://developer.apple.com/account/ios/certificate/). Make sure you have a Merchant Id. Navigate to `Identifiers` => `Merchant IDs` to make sure you have one, if not, create one.
+3. Go to `Certificates` tab, then click `+` on the right side of the `Certificate`s header.
+4. Scroll down and select `Apple Pay Payment Processing Certificate` and click `Continue`.
+5. Select the merchant id (A594HSLR6B.merchant.com.trydave.dave for PROD and A594HSLR6B.merchant.com.trydave.dave.staging for STAGING) in the dropdown menu then click `Continue`.
+6. Do not edit the name and scroll down to the Apple Pay Payment Processing Certificate section and Click `Create Certificate`.
+7. Upload the `.csr` file you created (`request.csr`) in step 1 and click `Continue`. Note that `.csr` is the same as `.certSigningRequest`.
+8. Click `Download` which will download as `apple_pay.cer`. You need that file to create the key.
+9. Generate a PEM file with the following command. You will need to password protect your `.p12` file. If you're using a company laptop you can leave the password blank and press `Enter`, else create a password and keep it somewhere secure.
 ```sh
 openssl x509 -inform DER -outform PEM -in apple_pay.cer -out temp.pem
 openssl pkcs12 -export -out key.p12 -inkey private.key -in temp.pem
 ```
-
-You will need to password protect your `.p12` file. Keep that password somewhere secure.
-
-You now have the two files you need to decrypt Apple Pay tokens, but before you can do that, you need to convert them into `.pem` files.
-
-Run the following commands to convert them to `.pem` files:
-
+10. You now have the two files you need to decrypt Apple Pay tokens, but before you can do that, you need to convert them into `.pem` files. Run the following commands to convert them to `.pem` files:
 ```sh
 openssl x509 -inform DER -outform PEM -in apple_pay.cer -out certPem.pem
 openssl pkcs12 -in key.p12 -out privatePem.pem -nocerts -nodes
 ```
-
-After all that, you should have a certificate (`certPem.pem`) file that looks something like this:
+11. After all that, you should have a certificate (`certPem.pem`) file that looks something like this:
 
 ```
 -----BEGIN CERTIFICATE-----
@@ -90,7 +85,7 @@ qDRXQRMETBev1j7Y1w/v2K0CIAlnnXPVX52g5FTadoFyVq2a91sA4ao4
 -----END PRIVATE KEY-----
 ```
 
-(And no, those are not my real keys)
+(these are not my real keys)
 
 ## Usage
 
