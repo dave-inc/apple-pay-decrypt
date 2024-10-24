@@ -14,38 +14,49 @@ In order to decrypt the token, you will need two `.pem` files. One is a certific
 
 If you get stuck, [this document](https://aaronmastsblog.com/blog/apple-pay-certificates/) might be helpful.
 
-Run the following commands (largely taken from the article written by [@amast09](https://github.com/amast09)) to generate your keys:
+## How to Renew and Rotate Apple Pay Payment Certificate
+
+The following steps were largely taken from the article written by [@amast09](https://github.com/amast09) to generate your keys. Repeat steps 2 - 15 for each environment (STAGING/PROD).
+
+1. Generate a CSR file with the following command. This will create two files `private.key` and `request.csr`. (Note: you can use the same `private.key` and `request.csr` for STAGING and PROD):
 
 ```sh
 openssl ecparam -out private.key -name prime256v1 -genkey
 openssl req -new -sha256 -key private.key -nodes -out request.csr
 ```
 
-Then go to the [Apple Developer Certificate Manager](https://developer.apple.com/account/ios/certificate/).
-
-Make sure you have a Merchant Id. Navigate to `Identifiers` => `Merchant IDs` to make sure you have one, if not, create one.
-
-Go to `Certificates` => `All`, then `+` in the top right. Select `Apple Pay Payment Processing Certificate`, go through to `Generate` and upload the `.csr` file you created (`request.csr`). Note that `.csr` is the same as `.certSigningRequest`.
-
-Download the file, which will download as `apple_pay.cer`. You need that file to create the key.
-
-```sh
-openssl x509 -inform DER -outform PEM -in apple_pay.cer -out temp.pem
-openssl pkcs12 -export -out key.p12 -inkey private.key -in temp.pem
-```
-
-You will need to password protect your `.p12` file. Keep that password somewhere secure.
-
-You now have the two files you need to decrypt Apple Pay tokens, but before you can do that, you need to convert them into `.pem` files.
-
-Run the following commands to convert them to `.pem` files:
+2. Go to the [Apple Developer Certificate Manager](https://developer.apple.com/account/resources/certificates/list). Make sure you have a Merchant Id. Navigate to `Identifiers` => `Merchant IDs` to make sure you have one, if not, create one.
+3. Go to `Certificates` tab, then click `+` on the right side of the `Certificate`s header.
+4. Scroll down and select `Apple Pay Payment Processing Certificate` and click `Continue`.
+5. Select the merchant id (A594HSLR6B.merchant.com.trydave.dave.staging for STAGING and A594HSLR6B.merchant.com.trydave.dave for PROD) in the dropdown menu then click `Continue`.
+6. Do not edit the name and scroll down to the Apple Pay Payment Processing Certificate section and Click `Create Certificate`.
+7. Upload the `.csr` file you created (`request.csr`) from step 1 and click `Continue`. `.csr` is the same as `.certSigningRequest`. (Note: you can use the same `request.csr` for STAGING and PROD)
+8. Click `Download` which will download as `apple_pay.cer`. You need that file to create the key. (Note: make sure to be aware of which environment `apple_pay.cer` you are using because you aren't able to change the name when you download the cert from the developer website)
+9. Generate a PEM file with the following command. You will need to password protect your `.p12` file. If you're using a company laptop you can leave the password blank and press `Enter`, else create a password and keep it somewhere secure.
 
 ```sh
-openssl x509 -inform DER -outform PEM -in apple_pay.cer -out certPem.pem
-openssl pkcs12 -in key.p12 -out privatePem.pem -nocerts -nodes
+# STAGING - make sure to use the correct apple_pay.cer (merchant.com.trydave.dave.staging) because you won't be able to rename the file when you download the cert from the developer website
+openssl x509 -inform DER -outform PEM -in apple_pay.cer -out stagingTemp.pem
+openssl pkcs12 -export -out stagingKey.p12 -inkey private.key -in stagingTemp.pem
+
+# PROD - make sure to use the correct apple_pay.cer (merchant.com.trydave.dave) because you won't be able to rename the file when you download the cert from the developer website
+openssl x509 -inform DER -outform PEM -in apple_pay.cer -out prodTemp.pem
+openssl pkcs12 -export -out prodKey.p12 -inkey private.key -in prodTemp.pem
 ```
 
-After all that, you should have a certificate (`certPem.pem`) file that looks something like this:
+10. You now have the two files you need to decrypt Apple Pay tokens, but before you can do that, you need to convert them into `.pem` files. Run the following commands to convert them to `.pem` files:
+
+```sh
+# STAGING
+openssl x509 -inform DER -outform PEM -in apple_pay.cer -out stagingCertPem.pem
+openssl pkcs12 -in stagingKey.p12 -out stagingPrivatePem.pem -nocerts -nodes
+
+# PROD
+openssl x509 -inform DER -outform PEM -in apple_pay.cer -out prodCertPem.pem
+openssl pkcs12 -in prodKey.p12 -out prodPrivatePem.pem -nocerts -nodes
+```
+
+11. After all that, you should have a certificate (`<staging|prod>CertPem.pem`) file that looks something like this:
 
 ```
 -----BEGIN CERTIFICATE-----
@@ -77,7 +88,7 @@ W5k1
 -----END CERTIFICATE-----
 ```
 
-And a key (`privatePem.pem`) that looks something like this:
+And a key (`<staging|prod>PrivatePem.pem`) that looks something like this:
 
 ```
 Bag Attributes
@@ -90,7 +101,41 @@ qDRXQRMETBev1j7Y1w/v2K0CIAlnnXPVX52g5FTadoFyVq2a91sA4ao4
 -----END PRIVATE KEY-----
 ```
 
-(And no, those are not my real keys)
+(these are not my real keys)
+
+12. Run the following commands and copy the output of the `<staging|prod>CertPem.pem` file and the `<staging|prod>PrivatePem.pem` file to be used in step 13. (Note: do not copy the % at the end of the string the string should end in \n)
+
+```sh
+# replace <staging|prod> with either staging or prod
+awk '{printf "%s\\n", $0}' <staging|prod>CertPem.pem
+```
+
+```sh
+# replace <staging|prod> with either staging or prod
+awk '{printf "%s\\n", $0}' <staging|prod>PrivatePem.pem
+```
+
+13. Create a json file `cert.json` and use the values from step 12 to replace the values of the certPem/privatePem keys of the example json object below. Replace the version value to the expiration date of the new certificate which can be found in the Certificates tab in the Apple developer website. (Note: should be 2 yrs from the day the certificate was created).
+
+```json
+{
+  "certPem": "-----BEGIN CERTIFICATE-----\nMIIEcjCCBBegAwIBAgIINWgcF0wqlb0wCgYIKoZIzj0EAwIwgYAxNDAyBgNVBAGG\nK2FwcGxlIFdvcmxkd2lkZSBEZXZlbG9wZXIgUmVsYXRpb25zIENBIC0gRzIxJjAk\nBgNVBAsMHUFwcGxlIENlcnRpZmljYXRpb24gQXV0aG9yaXR5MRMwEQYDVQQKDApB\ncHBsZSBJbmMuMQswCQYDVQQGEwJVUzAeFw0yNDEwMjMyMDU2NTBaFw0yNjExMjIy\nMDU2NDlaMIGiMSkwJwYKCZImiZPyLGQBAQwZbWVyY2hhbnQuY29tLnRyeWRhdmUu\nZGF2ZTE/MD0GA1UEAww2QXBwbGUgUGF5IFBheW1lbnQgUHJvY2Vzc2luZzptZXJj\naGFudC5jb20udHJ5ZGF2ZS5kYXZlMRMwEQYDVQQLDApBNTk0SFNMUjZCMRIwEAYD\nVQQKDAlEYXZlLCBJbmMxCzAJBgNVBAYTAlVTMFkwEwYHKoZIzj0CAQYIKoZIzj0D\nAQcDQgAEVKyEHUx/8XBrr3I0HlTt7/K4HsKTOTf0LgDh8pN2ZU9eS/1mrNwkPJc8\nRIqzQpQiba9qn+C++3zthjIlL/7jXKOCAlUwggJRMAwGA1UdEwEB/wQCMAAwHwYD\nVR0jBBgwFoAUhLaEzDqGYnIWWZToGqO9SN863wswRwYIKwYBBQUHAQEEOzA5MDcG\nCCsGAQUFBzABhitodHRwOi8vb2NzcC5hcHBsZS5jb20vb2NzcDA0LWFwcGxld3dk\ncmNhMjAxMIIBHQYDVR0gBIIBFDCCARAwggEMBgkqhkiG92NkBQEwgf4wgcMGCCsG\nAQUFBwICMIG2DIGzUmVsaWFuY2Ugb24gdGhpcyBjZXJ0aWZpY2F0ZSBieSBhbnkg\ncGFydHkgYXNzdW1lcyBhY2NlcHRhbmNlIG9mIHRoZSB0aGVuIGFwcGxpY2FibGUg\nc3RhbmRhcmQgdGVybXMgYW5kIGNvbmRpdGlvbnMgb2YgdXNlLCBjZXJ0aWZpY2F0\nZSBwb2xpY3kgYW5kIGNlcnRpZmljYXRpb24gcHJhY3RpY2Ugc3RhdGVtZW50cy4w\nNgYIKwYBBQUHAgEWKmh0dHA6Ly93d3cuYXBwbGUuY29tL2NlcnRpZmljYXRlYXV0\naG9yaXR5LzA2BgNVHR8ELzAtMCugKaAnhiVodHRwOi8vY3JsLmFwcGxlLmNvbS9h\ncHBsZXd3ZHJjYTIuY3JsMB0GA1UdDgQWBBSrIS1b4HWd5BEbGS14bDRd2pqECzAO\nBgNVHQ8BAf8EBAMCAygwTwYJKoZIhvdjZAYgBEIMQDhEMTk2OEY3OUIwNzNDOTg4\nNkZDNTczQ0YxMEI2NUREMEE0Mjg2OTk2N0IwMDQ1MDE1QTFDRjg2MEI0MTA0M0Uw\nCgYIKoZIzj0EAwIDSQAwRgIhANHZkwHzLInFEb9R7ufoGbp7LauAIl7debYCAYVr\nAtkfAiEAtLyGSrJDlSf/q7TOlztD6RvaQlYur30/k/oJinrVr9M=\n-----END CERTIFICATE-----\n",
+  "privatePem": "Bag Attributes\n    localKeyID: 8D 25 96 C8 23 FE B8 5E 72 04 75 12 C0 5E A2 83 F7 30 34 93 \nKey Attributes: <No Attributes>\n-----BEGIN PRIVATE KEY-----\nMIGHAgEAMBMGByqGSM49AgEGCQqGSM49AwEHBG0wawIBAQQgb9Oz8+IrYa0LfFGP\nfMq1UaktcZzhmQyHAyLx6mO08RuhRANCAARUrIQdTQ/xcGuvcjQeVO3v8rgewpM5\nN/QuAOHyk5ZlT15L/Was3CQ8lzxEirNClCJtr2qf4L77fO2GMiUv/uNc\n-----END PRIVATE KEY-----\n",
+  "version": "2026-11-22"
+}
+```
+
+14. Navigate to GSM, search  [PROD (banking-ecf4) Apple Cert Secret](https://console.cloud.google.com/security/secret-manager/secret/_cfgload-apple-pay-cert/versions?project=banking-ecf4). Do not disable the previous secret version. We want to keep both for now so the keys rotate if one fails.
+
+15. Observe the metrics to see the new version fails and the current one succeeds. This is normal and shows that we are successfully rotating the secret if one of them fails. If there are no metrics for the new version, we may need to redeploy banking-api to fetch the latest secret. If there are no metrics at all, manually create card funding with Apple Pay to trigger the metrics.
+
+16. Go to [Certificates](https://developer.apple.com/account/resources/certificates/list), click the newly created certificate, click the `Activate` button and click the `Activate` button in the modal (proceed with caution and make sure we correctly followed the steps above).
+
+17. Wait ~45mins or so and observe the metrics to show the new version succeed. We may need to manual create card funding with Apple Pay if there are no metrics.
+
+18. We may observe the old certificate succeed and the new certificate failing for a few hrs so its best to wait at least a day with only the new certificate succeeding before we disable the previous secret version.
+
+19. Disable the previous secret version once we are certain that we aren't getting metrics for the old version.
 
 ## Usage
 
