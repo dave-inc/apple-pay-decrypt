@@ -14,33 +14,49 @@ In order to decrypt the token, you will need two `.pem` files. One is a certific
 
 If you get stuck, [this document](https://aaronmastsblog.com/blog/apple-pay-certificates/) might be helpful.
 
-## How to Renew Apple Pay Payment Certificate
+## How to Renew and Rotate Apple Pay Payment Certificate
 
-The following steps were largely taken from the article written by [@amast09](https://github.com/amast09)) to generate your keys.
+The following steps were largely taken from the article written by [@amast09](https://github.com/amast09) to generate your keys. Repeat steps 2 - 15 for each environmnet (STAGING/PROD).
 
-1. Generate a CSR file with the following command:
+1. Generate a CSR file with the following command. This will create two files `private.key` and `request.csr`. (Note: you can use the same `private.key` and `request.csr` for STAGING and PROD):
+
 ```sh
 openssl ecparam -out private.key -name prime256v1 -genkey
 openssl req -new -sha256 -key private.key -nodes -out request.csr
 ```
+
 2. Go to the [Apple Developer Certificate Manager](https://developer.apple.com/account/ios/certificate/). Make sure you have a Merchant Id. Navigate to `Identifiers` => `Merchant IDs` to make sure you have one, if not, create one.
 3. Go to `Certificates` tab, then click `+` on the right side of the `Certificate`s header.
 4. Scroll down and select `Apple Pay Payment Processing Certificate` and click `Continue`.
-5. Select the merchant id (A594HSLR6B.merchant.com.trydave.dave for PROD and A594HSLR6B.merchant.com.trydave.dave.staging for STAGING) in the dropdown menu then click `Continue`.
+5. Select the merchant id (A594HSLR6B.merchant.com.trydave.dave.staging for STAGING and A594HSLR6B.merchant.com.trydave.dave for PROD) in the dropdown menu then click `Continue`.
 6. Do not edit the name and scroll down to the Apple Pay Payment Processing Certificate section and Click `Create Certificate`.
-7. Upload the `.csr` file you created (`request.csr`) in step 1 and click `Continue`. Note that `.csr` is the same as `.certSigningRequest`.
-8. Click `Download` which will download as `apple_pay.cer`. You need that file to create the key.
+7. Upload the `.csr` file you created (`request.csr`) from step 1 and click `Continue`. `.csr` is the same as `.certSigningRequest`. (Note: you can use the same `request.csr` for STAGING and PROD)
+8. Click `Download` which will download as `apple_pay.cer`. You need that file to create the key. (Note: make sure to be aware of which environment `apple_pay.cer` you are using because you aren't able to change the name when you download the cert from the developer website)
 9. Generate a PEM file with the following command. You will need to password protect your `.p12` file. If you're using a company laptop you can leave the password blank and press `Enter`, else create a password and keep it somewhere secure.
+
 ```sh
-openssl x509 -inform DER -outform PEM -in apple_pay.cer -out temp.pem
-openssl pkcs12 -export -out key.p12 -inkey private.key -in temp.pem
+# STAGING - make sure to use the correct apple_pay.cer (merchant.com.trydave.dave.staging) because you won't be able to rename the file when you download the cert from the developer website
+openssl x509 -inform DER -outform PEM -in apple_pay.cer -out stagingTemp.pem
+openssl pkcs12 -export -out stagingKey.p12 -inkey private.key -in stagingTemp.pem
+
+# PROD - make sure to use the correct apple_pay.cer (merchant.com.trydave.dave) because you won't be able to rename the file when you download the cert from the developer website
+openssl x509 -inform DER -outform PEM -in apple_pay.cer -out prodTemp.pem
+openssl pkcs12 -export -out prodKey.p12 -inkey private.key -in prodTemp.pem
 ```
+
 10. You now have the two files you need to decrypt Apple Pay tokens, but before you can do that, you need to convert them into `.pem` files. Run the following commands to convert them to `.pem` files:
+
 ```sh
-openssl x509 -inform DER -outform PEM -in apple_pay.cer -out certPem.pem
-openssl pkcs12 -in key.p12 -out privatePem.pem -nocerts -nodes
+# STAGING
+openssl x509 -inform DER -outform PEM -in apple_pay.cer -out stagingCertPem.pem
+openssl pkcs12 -in stagingKey.p12 -out stagingPrivatePem.pem -nocerts -nodes
+
+# PROD
+openssl x509 -inform DER -outform PEM -in apple_pay.cer -out prodCertPem.pem
+openssl pkcs12 -in prodKey.p12 -out prodPrivatePem.pem -nocerts -nodes
 ```
-11. After all that, you should have a certificate (`certPem.pem`) file that looks something like this:
+
+11. After all that, you should have a certificate (`<staging|prod>CertPem.pem`) file that looks something like this:
 
 ```
 -----BEGIN CERTIFICATE-----
@@ -72,7 +88,7 @@ W5k1
 -----END CERTIFICATE-----
 ```
 
-And a key (`privatePem.pem`) that looks something like this:
+And a key (`<staging|prod>PrivatePem.pem`) that looks something like this:
 
 ```
 Bag Attributes
@@ -86,6 +102,14 @@ qDRXQRMETBev1j7Y1w/v2K0CIAlnnXPVX52g5FTadoFyVq2a91sA4ao4
 ```
 
 (these are not my real keys)
+
+12. Upload the values to GSM and do not disable the previous version until we validate the new certs are working.
+
+13. Activate the cert
+
+14. Redeploy banking-api
+
+15. Make a Apple Pay transaction
 
 ## Usage
 
