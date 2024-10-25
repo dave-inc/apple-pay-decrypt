@@ -134,7 +134,7 @@ awk '{printf "%s\\n", $0}' <staging|prod>PrivatePem.pem
 }
 ```
 
-14. Navigate to [GSM](https://console.cloud.google.com/security/secret-manager?project=banking-ecf4), select the correct project id (`internal-1-4825` for STAGING and `banking-ecf4` for PROD), search for `_cfgload-apple-pay-cert`, and click the name. Direct link: [\_cfgload-apple-pay-cert in STAGING](https://console.cloud.google.com/security/secret-manager/secret/_cfgload-apple-pay-cert/versions?project=internal-1-4825) and [\_cfgload-apple-pay-cert in PROD](https://console.cloud.google.com/security/secret-manager/secret/_cfgload-apple-pay-cert/versions?project=banking-ecf4).
+14. Navigate to [GSM](https://console.cloud.google.com/security/secret-manager?project=banking-ecf4), select the correct project id (`internal-1-4825` for STAGING, `banking-ecf4` and `dave-173321` for PROD), search for `_cfgload-apple-pay-cert`, and click the name. Direct link: [\_cfgload-apple-pay-cert in STAGING](https://console.cloud.google.com/security/secret-manager/secret/_cfgload-apple-pay-cert/versions?project=internal-1-4825) and [\_cfgload-apple-pay-cert in PROD](https://console.cloud.google.com/security/secret-manager/secret/_cfgload-apple-pay-cert/versions?project=banking-ecf4), and [\_cfgload-apple-pay-cert in PROD (legacy)](https://console.cloud.google.com/security/secret-manager/secret/_cfgload-apple-pay-cert/versions?project=dave-173321).
 
 15. Click the `+ NEW VERSION` button. Upload the json file created in step 13. **DON'T** select the `Disable all past versions` (we want to keep the previous and new versions enabled for now so the keys rotate while the new certificate propogates after we activate it). Click `ADD NEW VERSION` button.
 
