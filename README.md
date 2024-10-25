@@ -16,7 +16,9 @@ If you get stuck, [this document](https://aaronmastsblog.com/blog/apple-pay-cert
 
 ## How to Renew and Rotate Apple Pay Payment Certificate
 
-The following steps were largely taken from the article written by [@amast09](https://github.com/amast09) to generate your keys. Repeat steps 2 - 15 for each environment (STAGING/PROD).
+The following steps were largely taken from the article written by [@amast09](https://github.com/amast09) to generate your keys. Repeat steps 2 - 20 for each environment (STAGING/PROD).
+
+Note: we have no metrics in STAGING and are unable to test this in STAGING because Apple Pay doesn't work for our STAGING env. So just renew the certificate, update the secret version, and disable the previous secret version for STAGING.
 
 1. Generate a CSR file with the following command. This will create two files `private.key` and `request.csr`. (Note: you can use the same `private.key` and `request.csr` for STAGING and PROD):
 
