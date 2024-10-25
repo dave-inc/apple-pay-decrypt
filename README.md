@@ -28,11 +28,11 @@ openssl req -new -sha256 -key private.key -nodes -out request.csr
 2. Go to the [Apple Developer Certificate Manager](https://developer.apple.com/account/resources/certificates/list). Make sure you have a Merchant Id. Navigate to `Identifiers` => `Merchant IDs` to make sure you have one, if not, create one.
 3. Go to `Certificates` tab, then click `+` on the right side of the `Certificate`s header.
 4. Scroll down and select `Apple Pay Payment Processing Certificate` and click `Continue`.
-5. Select the merchant id (A594HSLR6B.merchant.com.trydave.dave.staging for STAGING and A594HSLR6B.merchant.com.trydave.dave for PROD) in the dropdown menu then click `Continue`.
+5. Select the merchant id (`A594HSLR6B.merchant.com.trydave.dave.staging` for STAGING and `A594HSLR6B.merchant.com.trydave.dave` for PROD) in the dropdown menu then click `Continue`.
 6. Do not edit the name and scroll down to the Apple Pay Payment Processing Certificate section and Click `Create Certificate`.
 7. Upload the `.csr` file you created (`request.csr`) from step 1 and click `Continue`. `.csr` is the same as `.certSigningRequest`. (Note: you can use the same `request.csr` for STAGING and PROD)
-8. Click `Download` which will download as `apple_pay.cer`. You need that file to create the key. (Note: make sure to be aware of which environment `apple_pay.cer` you are using because you aren't able to change the name when you download the cert from the developer website)
-9. Generate a PEM file with the following command. You will need to password protect your `.p12` file. If you're using a company laptop you can leave the password blank and press `Enter`, else create a password and keep it somewhere secure.
+8. Click `Download` which will download as `apple_pay.cer`. You need that file to create the key. (Note: make sure to use the correct `apple_pay.cer` for each environment because there is no option to change the name when you download the cert from the developer website).
+9. Generate a PEM file with the following command. You will may need to password protect your `.p12` file. If you're using a company laptop you can leave the password blank and press `Enter`, else create a password and keep it somewhere secure.
 
 ```sh
 # STAGING - make sure to use the correct apple_pay.cer (merchant.com.trydave.dave.staging) because you won't be able to rename the file when you download the cert from the developer website
@@ -103,7 +103,7 @@ qDRXQRMETBev1j7Y1w/v2K0CIAlnnXPVX52g5FTadoFyVq2a91sA4ao4
 
 (these are not my real keys)
 
-12. Run the following commands and copy the output of the `<staging|prod>CertPem.pem` file and the `<staging|prod>PrivatePem.pem` file to be used in step 13. (Note: do not copy the % at the end of the string the string should end in \n)
+12. Run the following commands and copy the output of the `<staging|prod>CertPem.pem` file and the `<staging|prod>PrivatePem.pem` file to be used in step 13. (do not copy the % at the end of the output string the string should end in \n)
 
 ```sh
 # replace <staging|prod> with either staging or prod
@@ -115,7 +115,7 @@ awk '{printf "%s\\n", $0}' <staging|prod>CertPem.pem
 awk '{printf "%s\\n", $0}' <staging|prod>PrivatePem.pem
 ```
 
-13. Create a json file `cert.json` and use the values from step 12 to replace the values of the certPem/privatePem keys of the example json object below. Replace the version value to the expiration date of the new certificate which can be found in the Certificates tab in the Apple developer website. (Note: should be 2 yrs from the day the certificate was created).
+13. Create a json file `<staging|prod>Cert.json` and use the values from step 12 to replace the values of the certPem/privatePem keys of the example json object below. Replace the version value to the expiration date of the new certificate found in the `EXPIRATION` column of the [certificate list](https://developer.apple.com/account/resources/certificates/list). The expiration should be 2 yrs from the day the certificate was created.
 
 ```json
 {
@@ -125,17 +125,24 @@ awk '{printf "%s\\n", $0}' <staging|prod>PrivatePem.pem
 }
 ```
 
-14. Navigate to GSM, search  [PROD (banking-ecf4) Apple Cert Secret](https://console.cloud.google.com/security/secret-manager/secret/_cfgload-apple-pay-cert/versions?project=banking-ecf4). Do not disable the previous secret version. We want to keep both for now so the keys rotate if one fails.
+14. Navigate to [GSM](https://console.cloud.google.com/security/secret-manager?project=banking-ecf4), select the correct project id (`internal-1-4825` for STAGING and `banking-ecf4` for PROD), search for `_cfgload-apple-pay-cert`, and click the name. Direct link: [\_cfgload-apple-pay-cert in STAGING](https://console.cloud.google.com/security/secret-manager/secret/_cfgload-apple-pay-cert/versions?project=internal-1-4825) and [\_cfgload-apple-pay-cert in PROD](https://console.cloud.google.com/security/secret-manager/secret/_cfgload-apple-pay-cert/versions?project=banking-ecf4).
 
-15. Observe the metrics to see the new version fails and the current one succeeds. This is normal and shows that we are successfully rotating the secret if one of them fails. If there are no metrics for the new version, we may need to redeploy banking-api to fetch the latest secret. If there are no metrics at all, manually create card funding with Apple Pay to trigger the metrics.
+15. Click the `+ NEW VERSION` button. Upload the json file created in step 13. **DON'T** select the `Disable all past versions` (we want to keep the previous and new versions enabled for now so the keys rotate while the new certificate propogates after we activate it). Click `ADD NEW VERSION` button.
 
-16. Go to [Certificates](https://developer.apple.com/account/resources/certificates/list), click the newly created certificate, click the `Activate` button and click the `Activate` button in the modal (proceed with caution and make sure we correctly followed the steps above).
+16. Observe the [metrics](https://app.datadoghq.com/dashboard/89w-4sr-zdh/apple-pay-payment-processing) to see the new version fails and the previous version succeeds. This is normal and shows that we are successfully rotating the secret if one of them fails. If there are no metrics for the new version, we may need to redeploy banking-api to fetch the latest secret. If there are no metrics at all, manually create card funding with Apple Pay to trigger the metrics.
 
-17. Wait ~45mins or so and observe the metrics to show the new version succeed. We may need to manual create card funding with Apple Pay if there are no metrics.
+17. Go to [Certificates](https://developer.apple.com/account/resources/certificates/list), click the newly created certificate, click the `Activate` button and click the `Activate` button in the modal. Proceed with caution and make sure we correctly followed the steps to prevent Apply Pay transactions from failing.
 
-18. We may observe the old certificate succeed and the new certificate failing for a few hrs so its best to wait at least a day with only the new certificate succeeding before we disable the previous secret version.
+18. Wait ~45mins or so and observe the [metrics](https://app.datadoghq.com/dashboard/89w-4sr-zdh/apple-pay-payment-processing) to show the new version succeed. We may need to manual create card funding with Apple Pay if there are no metrics. If there are no metrics after manual intervention, go over the previous steps to make sure we didn't skip a step or made a mistake.
 
-19. Disable the previous secret version once we are certain that we aren't getting metrics for the old version.
+19. Wait ~3 hrs after the first success with the new version as we may observe the old version succeed and the new version failing randomly.
+
+20. Disable the previous secret version in GSM once we have at least a 3 hrs timespan of only the new version succeeding and no [metrics](https://app.datadoghq.com/dashboard/89w-4sr-zdh/apple-pay-payment-processing) of the old version succeeding.
+
+## IMPORTANT NOTES:
+
+- It takes about an hour for the new certificate to propagate after activation. Failures will occur for about an hour when trying to decrypt with the new certificate values. You'll need to fallback to old values for safe rotation. https://tech.bolt.com/apple-pay-certificate-rotation-e4eee6b0683f
+- DataDog dashboard https://app.datadoghq.com/dashboard/89w-4sr-zdh/apple-pay-payment-processing
 
 ## Usage
 
@@ -185,9 +192,5 @@ The `decrypted` value at this point should look something like this:
 }
 ```
 
-# IMPORTANT NOTES: 
-
-* Remember that the `transactionAmount` will come back as the number of cents so \$500 = 50000
-* You can then use those decrypted values with your payment processor of choice (Stripe, Braintree, in our case Tabapay) to process payments from Apple Pay.
-* It takes about an hour for the new certificate to propagate after activation.  Failures will occur for about an hour when trying to decrypt with the new certificate values.  You'll need to fallback to old values for safe rotation. https://tech.bolt.com/apple-pay-certificate-rotation-e4eee6b0683f
-* DataDog dashboard https://app.datadoghq.com/dashboard/89w-4sr-zdh/apple-pay-payment-processing
+- Remember that the `transactionAmount` will come back as the number of cents so \$500 = 50000
+- You can then use those decrypted values with your payment processor of choice (Stripe, Braintree, in our case Tabapay) to process payments from Apple Pay.
