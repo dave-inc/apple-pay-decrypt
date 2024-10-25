@@ -26,12 +26,19 @@ openssl req -new -sha256 -key private.key -nodes -out request.csr
 ```
 
 2. Go to the [Apple Developer Certificate Manager](https://developer.apple.com/account/resources/certificates/list). Make sure you have a Merchant Id. Navigate to `Identifiers` => `Merchant IDs` to make sure you have one, if not, create one.
+
 3. Go to `Certificates` tab, then click `+` on the right side of the `Certificate`s header.
+
 4. Scroll down and select `Apple Pay Payment Processing Certificate` and click `Continue`.
+
 5. Select the merchant id (`A594HSLR6B.merchant.com.trydave.dave.staging` for STAGING and `A594HSLR6B.merchant.com.trydave.dave` for PROD) in the dropdown menu then click `Continue`.
+
 6. Do not edit the name and scroll down to the Apple Pay Payment Processing Certificate section and Click `Create Certificate`.
+
 7. Upload the `.csr` file you created (`request.csr`) from step 1 and click `Continue`. `.csr` is the same as `.certSigningRequest`. (Note: you can use the same `request.csr` for STAGING and PROD)
+
 8. Click `Download` which will download as `apple_pay.cer`. You need that file to create the key. (Note: make sure to use the correct `apple_pay.cer` for each environment because there is no option to change the name when you download the cert from the developer website).
+
 9. Generate a PEM file with the following command. You will may need to password protect your `.p12` file. If you're using a company laptop you can leave the password blank and press `Enter`, else create a password and keep it somewhere secure.
 
 ```sh
