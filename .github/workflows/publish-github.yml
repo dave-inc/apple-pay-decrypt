@@ -23,8 +23,8 @@ jobs:
     outputs:
       continue: ${{ steps.check.outputs.continue }}
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2
+      - uses: actions/setup-node@7c12f8017d5436eb855f1ed4399f037a36fbd9e8 # v2
         with:
           node-version: '14.x'
           registry-url: 'https://npm.pkg.github.com'
@@ -40,8 +40,8 @@ jobs:
     if: ${{ needs.check-packages-github.outputs.continue == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2
+      - uses: actions/setup-node@7c12f8017d5436eb855f1ed4399f037a36fbd9e8 # v2
         with:
           node-version: '14.x'
           registry-url: 'https://npm.pkg.github.com'
